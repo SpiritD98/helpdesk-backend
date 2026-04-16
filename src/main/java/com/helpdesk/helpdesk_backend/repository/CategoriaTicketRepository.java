@@ -1,0 +1,30 @@
+package com.helpdesk.helpdesk_backend.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.helpdesk.helpdesk_backend.model.CategoriaTicket;
+
+public interface CategoriaTicketRepository extends JpaRepository<CategoriaTicket, Long> {
+    // TODO: Listar categorías activas o inactivas.
+    // Será útil para filtros y administración de categorías.
+    List<CategoriaTicket> findByActiva(boolean activa);
+
+    // TODO: Listar todas las categorías de una empresa.
+    // En el sistema SaaS cada empresa tendrá sus propias categorías.
+    List<CategoriaTicket> findByEmpresaId(Long empresaId);
+
+    // TODO: Listar categorías de una empresa filtrando si están activas.
+    // Ejemplo: categorías activas de la empresa 2.
+    List<CategoriaTicket> findByEmpresaIdAndActiva(Long empresaId, boolean activa);
+
+    // TODO: Buscar una categoría por nombre dentro de una empresa.
+    // Sirve para validar que no se repita el nombre en la misma empresa.
+    Optional<CategoriaTicket> findByNombreAndEmpresaId(String nombre, Long empresaId);
+
+    // TODO: Verificar si ya existe una categoría con ese nombre en una empresa.
+    // Importante para evitar duplicados por empresa.
+    boolean existsByNombreAndEmpresaId(String nombre, Long empresaId);
+}
