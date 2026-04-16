@@ -20,7 +20,4 @@ public interface UsuarioRepository  extends JpaRepository <Usuario, Long > {
 
     List<Usuario> findByEstado(boolean estado);
 
-
-
-
 }
