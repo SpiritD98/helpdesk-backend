@@ -7,24 +7,22 @@ import com.helpdesk.helpdesk_backend.model.Usuario;
 
 public interface UsuarioService {
 
-    List<Usuario> findAll();
+    // CRUD Básico
+    List<Usuario> listarTodos();
+    Optional<Usuario> buscarPorId(Long id);
+    Usuario guardar(Usuario usuario);
+    Usuario actualizar(Long id, Usuario usuario);
+    void eliminar(Long id);
 
-    Usuario findById(Long id);
+    // Métodos Custom
+    Optional<Usuario> buscarPorEmail(String email);
+    boolean existeEmail(String email);
 
-    Optional<Usuario> findByEmail(String email);
-
-    List<Usuario> findByEmpresaId(Long empresaId);
-
-    List<Usuario> findByEmpresaIdAndRolNombre(Long empresaId, String rolNombre);
-
-    List<Usuario> findByEstado(boolean estado);
-
-    Usuario save(Usuario usuario);
-
-    Usuario update(Long id, Usuario usuario);
-
-    void deleteById(Long id);
-
-    boolean existsByEmail(String email);
+    
+    List<Usuario> listarPorEmpresa(Long empresaId);
+    List<Usuario> listarPorRol(Long rolId);
+    List<Usuario> listarActivosPorEmpresa(Long empresaId, boolean activo);
+    List<Usuario> listarPorEmpresaYRol(Long empresaId, Long rolId);
+    List<Usuario> listarPorEstado(boolean activo);
 }
 
