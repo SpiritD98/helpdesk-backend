@@ -7,7 +7,6 @@ import com.helpdesk.helpdesk_backend.model.Empresa;
 
 public interface EmpresaService {
 
-
     // CRUD Básico
     List<Empresa> listarTodos();
     Optional<Empresa> buscarPorId(Long id);
