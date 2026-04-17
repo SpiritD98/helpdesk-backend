@@ -9,8 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * Manejador global de excepciones.
+ * Captura cualquier error y devuelve un JSON claro en lugar de una página HTML de error.
+ */
 @RestControllerAdvice
-
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
@@ -32,6 +35,4 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
-
-
 }

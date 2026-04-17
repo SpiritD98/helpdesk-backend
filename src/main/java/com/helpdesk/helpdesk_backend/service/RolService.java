@@ -6,7 +6,7 @@ import java.util.Optional;
 import com.helpdesk.helpdesk_backend.model.Rol;
 
 public interface RolService {
-
+    
     // CRUD Básico
     List<Rol> listarTodos();
     Optional<Rol> buscarPorId(Long id);
@@ -17,5 +17,5 @@ public interface RolService {
     // Métodos Custom
     Optional<Rol> buscarPorNombre(String nombre);
     boolean existePorNombre(String nombre);
-
 }
+

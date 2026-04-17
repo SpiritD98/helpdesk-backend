@@ -6,7 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
 import lombok.*;
-/* Vamos a tratar las entidades en singular */
+
 @Entity
 @Table(name = "empresa")
 @Getter @Setter

@@ -8,10 +8,7 @@ import java.util.Optional;
 import com.helpdesk.helpdesk_backend.model.CategoriaTicket;
 
 
-
-
 public interface CategoriaTicketService {
-
     List<CategoriaTicket> listarTodos();
     Optional<CategoriaTicket> buscarPorId(Long id);
     CategoriaTicket guardar(CategoriaTicket categoriaTicket);
@@ -23,7 +20,4 @@ public interface CategoriaTicketService {
     List<CategoriaTicket> listarPorEmpresaIdYActiva(Long empresaId, boolean activa);
     Optional<CategoriaTicket> buscarPorNombreYEmpresaId(String nombre, Long empresaId);
     boolean existePorNombreYEmpresaId(String nombre, Long empresaId);
-
-
-
 }

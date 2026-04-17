@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.helpdesk.helpdesk_backend.model.CategoriaTicket;
 import com.helpdesk.helpdesk_backend.service.CategoriaTicketService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/categorias")
@@ -59,5 +59,4 @@ public class CategoriaTicketController {
         categoriaTicketService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
-
 }

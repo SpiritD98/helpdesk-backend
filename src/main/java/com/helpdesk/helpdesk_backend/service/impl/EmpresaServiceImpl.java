@@ -124,5 +124,4 @@ public class EmpresaServiceImpl implements EmpresaService {
     public boolean existePorCorreoContacto(String correoContacto) {
         return empresaRepository.existsByCorreoContacto(correoContacto);
     }
-
 }

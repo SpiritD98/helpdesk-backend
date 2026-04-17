@@ -8,7 +8,6 @@ import com.helpdesk.helpdesk_backend.model.enums.EstadoTicket;
 import com.helpdesk.helpdesk_backend.model.enums.PrioridadTicket;
 
 public interface TicketService {
-
     List<Ticket> listarTodos();
     Optional<Ticket> buscarPorId(Long id);
     Ticket guardar(Ticket ticket);
@@ -25,5 +24,4 @@ public interface TicketService {
     List<Ticket> listarPorEmpresaIdYEstado(Long empresaId, EstadoTicket estado);
     List<Ticket> listarPorEmpresaIdYPrioridad(Long empresaId, PrioridadTicket prioridad);
     boolean existePorCodigo(String codigo);
-
 }

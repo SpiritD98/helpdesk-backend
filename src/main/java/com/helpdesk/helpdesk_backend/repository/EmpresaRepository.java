@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.helpdesk.helpdesk_backend.model.Empresa;
 
-public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
+public interface EmpresaRepository  extends JpaRepository<Empresa, Long> {
+
     // TODO: Buscar una empresa por su RUC.
     // Se usará para validaciones y para evitar registrar empresas repetidas.
     Optional<Empresa> findByRuc(String ruc);
@@ -22,4 +23,5 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     // TODO: Verificar si ya existe una empresa con ese correo de contacto.
     // También se usará para validar registros repetidos.
     boolean existsByCorreoContacto(String correoContacto);
+
 }

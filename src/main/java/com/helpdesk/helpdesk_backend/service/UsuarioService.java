@@ -6,7 +6,7 @@ import java.util.Optional;
 import com.helpdesk.helpdesk_backend.model.Usuario;
 
 public interface UsuarioService {
-
+    
     // CRUD Básico
     List<Usuario> listarTodos();
     Optional<Usuario> buscarPorId(Long id);

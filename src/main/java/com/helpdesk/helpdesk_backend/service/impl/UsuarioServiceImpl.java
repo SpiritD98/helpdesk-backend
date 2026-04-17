@@ -11,12 +11,12 @@ import com.helpdesk.helpdesk_backend.model.Usuario;
 import com.helpdesk.helpdesk_backend.repository.UsuarioRepository;
 import com.helpdesk.helpdesk_backend.service.UsuarioService;
 
+
 @Service
 @Transactional
-
 public class UsuarioServiceImpl implements UsuarioService {
-  
-     private final UsuarioRepository usuarioRepository;
+
+    private final UsuarioRepository usuarioRepository;
 
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
@@ -151,6 +151,3 @@ public class UsuarioServiceImpl implements UsuarioService {
         return usuarioRepository.findByActivo(activo);
     }
 }
-
-    
-    

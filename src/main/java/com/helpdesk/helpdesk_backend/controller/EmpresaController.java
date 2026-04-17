@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.helpdesk.helpdesk_backend.model.Empresa;
 import com.helpdesk.helpdesk_backend.service.EmpresaService;
+import org.springframework.web.bind.annotation.*;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 @RequestMapping("/api/empresas")
@@ -68,5 +68,4 @@ public class EmpresaController {
         empresaService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
-
 }

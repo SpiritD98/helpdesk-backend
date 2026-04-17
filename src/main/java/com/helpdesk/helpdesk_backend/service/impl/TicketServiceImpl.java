@@ -163,6 +163,4 @@ public class TicketServiceImpl implements TicketService {
     public boolean existePorCodigo(String codigo) {
         return ticketRepository.existsByCodigo(codigo);
     }
-
-    
 }

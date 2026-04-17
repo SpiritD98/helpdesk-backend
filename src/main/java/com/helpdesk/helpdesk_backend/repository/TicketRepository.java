@@ -9,7 +9,8 @@ import com.helpdesk.helpdesk_backend.model.Ticket;
 import com.helpdesk.helpdesk_backend.model.enums.EstadoTicket;
 import com.helpdesk.helpdesk_backend.model.enums.PrioridadTicket;
 
-public interface TicketRepository extends JpaRepository<Ticket, Long> {
+public interface TicketRepository extends JpaRepository<Ticket, Long>  {
+
     // TODO: Buscar un ticket por su código.
     // Será útil para mostrar, consultar o ubicar tickets rápidamente.
     Optional<Ticket> findByCodigo(String codigo);
@@ -49,4 +50,5 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     // TODO: Verificar si ya existe un ticket con ese código.
     // Servirá para evitar duplicados.
     boolean existsByCodigo(String codigo);
+
 }

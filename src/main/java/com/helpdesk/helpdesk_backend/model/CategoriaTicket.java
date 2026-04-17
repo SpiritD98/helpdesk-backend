@@ -1,5 +1,7 @@
 package com.helpdesk.helpdesk_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +11,7 @@ import lombok.*;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 /* Vamos a tratar las entidades en singular */
+
 public class CategoriaTicket {
 
     @Id
@@ -31,5 +34,6 @@ public class CategoriaTicket {
        Se cambio a LAZY, para posteriormente controlarlo desde los DTO  y evitar datos innecesarios*/
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Empresa empresa;
 }

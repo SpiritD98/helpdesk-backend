@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.helpdesk.helpdesk_backend.model.Rol;
 
-public interface RolRepository extends JpaRepository<Rol, Long> {
-
+public interface RolRepository  extends JpaRepository<Rol, Long> {
+   
     // TODO: Buscar un rol por su nombre.
     // Ejemplo: ADMIN_EMPRESA, AGENTE, CLIENTE.
     // Será útil cuando se asignen roles a los usuarios.
@@ -16,4 +16,5 @@ public interface RolRepository extends JpaRepository<Rol, Long> {
     // TODO: Verificar si ya existe un rol con ese nombre.
     // Servirá para evitar duplicados si luego se permite registrar roles.
     boolean existsByNombre(String nombre);
+
 }
