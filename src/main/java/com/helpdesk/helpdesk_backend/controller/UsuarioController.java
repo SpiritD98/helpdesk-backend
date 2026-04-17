@@ -22,8 +22,8 @@ import com.helpdesk.helpdesk_backend.service.UsuarioService;
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
-
-    private final UsuarioService usuarioService;
+    
+private final UsuarioService usuarioService;
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
