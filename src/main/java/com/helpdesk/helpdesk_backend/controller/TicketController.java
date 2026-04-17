@@ -75,5 +75,4 @@ public class TicketController {
         ticketService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
-
 }
