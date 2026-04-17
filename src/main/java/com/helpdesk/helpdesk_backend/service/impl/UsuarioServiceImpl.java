@@ -15,8 +15,8 @@ import com.helpdesk.helpdesk_backend.service.UsuarioService;
 @Transactional
 
 public class UsuarioServiceImpl implements UsuarioService {
-
-    private final UsuarioRepository usuarioRepository;
+  
+     private final UsuarioRepository usuarioRepository;
 
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
