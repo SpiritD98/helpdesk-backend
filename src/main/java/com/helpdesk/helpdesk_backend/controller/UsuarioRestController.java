@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import com.helpdesk.helpdesk_backend.model.Usuario;
 import com.helpdesk.helpdesk_backend.service.UsuarioService;
 
+
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
