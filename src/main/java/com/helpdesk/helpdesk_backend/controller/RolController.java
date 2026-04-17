@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 @RequestMapping("/api/roles")
 public class RolController {
 
-     private final RolService rolService;
+    private final RolService rolService;
 
     public RolController(RolService rolService) {
         this.rolService = rolService;
