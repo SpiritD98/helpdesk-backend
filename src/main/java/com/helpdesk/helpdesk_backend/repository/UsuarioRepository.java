@@ -36,4 +36,9 @@ public interface UsuarioRepository  extends JpaRepository <Usuario, Long > {
     // Puede usarse en el panel de administración.
     List<Usuario> findByActivo(boolean activo);
 
+
+    List<Usuario> findByEmpresaIdAndRolNombre(Long empresaId, String rolNombre);
+
+    List<Usuario> findByEstado(boolean estado);
+
 }
