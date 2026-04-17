@@ -65,7 +65,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         existing.setApellidos(usuario.getApellidos());
         existing.setEmail(usuario.getEmail());
         existing.setPassword(usuario.getPassword());
-        existing.setEstado(usuario.getEstado());
+        existing.setEstado(usuario.isEstado());
         existing.setEmpresa(usuario.getEmpresa());
         existing.setRol(usuario.getRol());
         return usuarioRepository.save(existing);

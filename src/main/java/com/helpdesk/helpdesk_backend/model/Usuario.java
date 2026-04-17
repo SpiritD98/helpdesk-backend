@@ -48,7 +48,7 @@ public class Usuario {
     /* Se cambio Boolean a boolean para evitar null */
     @Builder.Default
     @Column(nullable = false)
-    private boolean activo = true;
+    private boolean estado = true;
 
     /* @CreationTimestamp encaja mejor con una fecha de creación persistida */
     @CreationTimestamp
