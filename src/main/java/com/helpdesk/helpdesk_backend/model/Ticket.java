@@ -16,7 +16,6 @@ import lombok.*;
 @Builder
 /* Vamos a tratar las entidades en singular */
 public class Ticket {
-  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

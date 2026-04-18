@@ -28,7 +28,7 @@ public class CategoriaTicket {
     private boolean activa = true;
 
     /* Se agrego relacion con empresa, una categoria pertenece a una empresa 
-       Se cambio a LAZY, para posteriormente controlarlo desde los DTO  y evitar datos innecesarios*/
+    Se cambio a LAZY, para posteriormente controlarlo desde los DTO  y evitar datos innecesarios*/
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
