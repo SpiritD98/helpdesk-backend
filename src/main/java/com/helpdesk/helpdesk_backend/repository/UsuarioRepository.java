@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface UsuarioRepository  extends JpaRepository <Usuario, Long > {
+
     // Buscar usuario por email.
     // Este método será clave para login, seguridad y validaciones.
     Optional <Usuario> findByEmail(String email) ;
@@ -35,10 +36,5 @@ public interface UsuarioRepository  extends JpaRepository <Usuario, Long > {
     // Listar usuarios según si están activos o inactivos.
     // Puede usarse en el panel de administración.
     List<Usuario> findByActivo(boolean activo);
-
-
-    List<Usuario> findByEmpresaIdAndRolNombre(Long empresaId, String rolNombre);
-
-    List<Usuario> findByEstado(boolean estado);
 
 }

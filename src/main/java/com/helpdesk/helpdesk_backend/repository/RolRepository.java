@@ -8,12 +8,12 @@ import com.helpdesk.helpdesk_backend.model.Rol;
 
 public interface RolRepository extends JpaRepository<Rol, Long> {
 
-    // TODO: Buscar un rol por su nombre.
+    // Buscar un rol por su nombre.
     // Ejemplo: ADMIN_EMPRESA, AGENTE, CLIENTE.
     // Será útil cuando se asignen roles a los usuarios.
     Optional<Rol> findByNombre(String nombre);
 
-    // TODO: Verificar si ya existe un rol con ese nombre.
+    // Verificar si ya existe un rol con ese nombre.
     // Servirá para evitar duplicados si luego se permite registrar roles.
     boolean existsByNombre(String nombre);
 }
