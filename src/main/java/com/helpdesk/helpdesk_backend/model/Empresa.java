@@ -6,18 +6,22 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
 import lombok.*;
-/* Vamos a tratar las entidades en singular */
+
 @Entity
 @Table(name = "empresa")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
+/* 
+    Entidad que representa a las empresas clientes del sistema.
+    Se utiliza el nombre en singular siguiendo las convenciones de JPA. 
+*/
 public class Empresa {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    /*Se agrego el max de caracteres */
+
     @Column(nullable = false, length = 150)
     private String nombre;
 
@@ -27,16 +31,15 @@ public class Empresa {
     @Column(name = "correo_contacto", nullable = false, unique = true, length = 120)
     private String correoContacto;
 
-    /*Se agrego este campo*/
     @Column(name = "telefono_contacto", nullable = false, length = 20)
     private String telefonoContacto;
     
-    /*Se cambio el nombre de estado a activo */
+    /* Estado lógico: Permite inhabilitar una empresa sin perder su historial transaccional. */
     @Builder.Default
     @Column(nullable = false)
     private boolean activo = true;
     
-    /*Se cambio de notacion, permitira rellenar el campo automaticamente al insertarla en la bd*/
+    /* Auditoría: Se registra automáticamente al insertar el registro y no permite modificaciones posteriores. */
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;

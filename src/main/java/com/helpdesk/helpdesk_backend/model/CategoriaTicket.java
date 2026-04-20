@@ -10,30 +10,35 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-/* Vamos a tratar las entidades en singular */
+/*
+   Entidad que agrupa los tipos de tickets (ej. Soporte Técnico, Facturación).
+   Cada categoría está vinculada exclusivamente a una empresa.
+ */
 public class CategoriaTicket {
 
+    /* El valor del ID se autogenera en la BD */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* Se agrego longitud */
     @Column(nullable = false, length = 50)
     private String nombre;
 
     @Column(length = 250)
     private String descripcion ;
 
-    /* Evitaremos que las categorias sean borradas, solo desactivarlas */
+    /* Borrado lógico: Permite desactivar la categoría sin eliminarla físicamente,
+       asegurando que los tickets históricos no pierdan su referencia. */
     @Builder.Default
     @Column(nullable = false)
-    private boolean activa = true;
+    private boolean activo = true;
 
-    /* Se agrego relacion con empresa, una categoria pertenece a una empresa 
-    Se cambio a LAZY, para posteriormente controlarlo desde los DTO  y evitar datos innecesarios*/
+    /* Se agrego relacion con empresa, ya que cada categoria de ticket pertenece a una empresa.
+       FetchType.LAZY: Optimiza la consulta al no cargar la empresa si no es requerida.
+       @JsonIgnoreProperties: Evita que Jackson intente serializar atributos técnicos 
+       del Proxy de Hibernate (handler e initializer), evitando errores en la API. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
-    /*  */
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Empresa empresa;
 }

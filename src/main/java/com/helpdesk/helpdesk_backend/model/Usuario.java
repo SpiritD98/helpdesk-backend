@@ -22,7 +22,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-/* Vamos a tratar las entidades en singular */
+/*
+    Entidad que representa a los usuarios del sistema.
+    Se utiliza el nombre en singular siguiendo las convenciones de JPA.
+ */
 public class Usuario {
     
     @Id
@@ -38,26 +41,27 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 120)
     private String email;
 
-    /* Le agregue longitud explicita */
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Evita que la contraseña se exponga en las respuestas JSON
-    @Column(nullable = false, length = 255)
+    /* WRITE_ONLY: Permite recibir la clave al crear/editar, pero nunca la incluye en las respuestas JSON */
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(nullable = false, length = 255)// Longitud de 255 recomendada para hashes de contraseñas (BCrypt)
     private String password;
 
-    /* Se agrego telefono */
     @Column(length = 20)
     private String telefono;
 
-    /* Se cambio Boolean a boolean para evitar null */
+    /* Se usa el tipo primitivo boolean para asegurar que el valor por defecto sea false/true y no null */
     @Builder.Default
     @Column(nullable = false)
     private boolean activo = true;
 
-    /* @CreationTimestamp encaja mejor con una fecha de creación persistida */
+    /* Registra automáticamente la fecha de creación. updatable = false impide que se modifique después */
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
-    /* Usuario debe tener empresa y rol, por eso se agrego optional = false */
+    /* Usuario debe tener empresa y rol, relaciones obligatorias (optional = false). 
+       LAZY para optimizar carga; 
+       JsonIgnoreProperties evita errores con los proxies de Hibernate al serializar a JSON */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
