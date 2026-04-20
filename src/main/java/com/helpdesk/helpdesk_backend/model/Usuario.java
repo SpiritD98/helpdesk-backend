@@ -4,7 +4,8 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,7 @@ import lombok.Setter;
 @Builder
 /* Vamos a tratar las entidades en singular */
 public class Usuario {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,7 +39,7 @@ public class Usuario {
     private String email;
 
     /* Le agregue longitud explicita */
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // Evita que la contraseña se exponga en las respuestas JSON
     @Column(nullable = false, length = 255)
     private String password;
 
@@ -48,7 +50,7 @@ public class Usuario {
     /* Se cambio Boolean a boolean para evitar null */
     @Builder.Default
     @Column(nullable = false)
-    private boolean estado = true;
+    private boolean activo = true;
 
     /* @CreationTimestamp encaja mejor con una fecha de creación persistida */
     @CreationTimestamp
@@ -58,9 +60,11 @@ public class Usuario {
     /* Usuario debe tener empresa y rol, por eso se agrego optional = false */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Empresa empresa;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "rol_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Rol rol;
 }
