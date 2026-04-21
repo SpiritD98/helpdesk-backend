@@ -27,7 +27,7 @@ public interface UsuarioService {
     Optional<Usuario> buscarPorEmail(String email);
     
     //Verifica si existe usuario por email, para evitar duplicados
-    boolean existsByEmail(String email);
+    boolean existeEmail(String email);
 
     //Lista usuarios por empresa
     List<Usuario> listarPorEmpresa(Long empresaId);
