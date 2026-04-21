@@ -60,7 +60,7 @@ public class Usuario {
     private LocalDateTime fechaCreacion;
 
     /* Usuario debe tener empresa y rol, relaciones obligatorias (optional = false). 
-       LAZY para optimizar carga; 
+    LAZY para optimizar carga; 
        JsonIgnoreProperties evita errores con los proxies de Hibernate al serializar a JSON */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
