@@ -54,7 +54,7 @@ public class CategoriaTicketServiceImpl implements CategoriaTicketService {
 
         categoriaExistente.setNombre(categoriaTicket.getNombre());
         categoriaExistente.setDescripcion(categoriaTicket.getDescripcion());
-        categoriaExistente.setActivo(categoriaTicket.isActivo());
+        categoriaExistente.setActiva(categoriaTicket.isActiva());
         categoriaExistente.setEmpresa(categoriaTicket.getEmpresa());
 
         return categoriaTicketRepository.save(categoriaExistente);

@@ -31,7 +31,7 @@ public class CategoriaTicket {
        asegurando que los tickets históricos no pierdan su referencia. */
     @Builder.Default
     @Column(nullable = false)
-    private boolean activo = true;
+    private boolean activa = true;
 
     /* Se agrego relacion con empresa, ya que cada categoria de ticket pertenece a una empresa.
        FetchType.LAZY: Optimiza la consulta al no cargar la empresa si no es requerida.
