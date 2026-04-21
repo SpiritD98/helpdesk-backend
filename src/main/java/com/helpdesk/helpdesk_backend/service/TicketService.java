@@ -6,25 +6,44 @@ import com.helpdesk.helpdesk_backend.model.enums.EstadoTicket;
 import com.helpdesk.helpdesk_backend.model.enums.PrioridadTicket;
 
 public interface TicketService {
-    //Método para crea un ticket nuevo
-    Ticket crearTicket(Ticket ticket);
-    //Devuelve los tickets de la bd
+    
+    // Busca todos los tickets, sin filtros
     List<Ticket> listarTodos();
-    //Busca ticket por id, usa optional para evitar errores de inexistencia
-    Optional<Ticket> obtenerPorId(Long id);
-    //Busca ticket por codigo, usa optional para evitar errores de inexistencia
-    Optional<Ticket> obtenerPorCodigo(String codigo);
-    //Actualiza ticket existente
-    Ticket actualizarTicket(Long id, Ticket ticket);
-    //Elimina ticket por id
-    void eliminarTicket(Long id);
+
+    // Busca ticket por id, usa optional para evitar errores de inexistencia
+    Optional<Ticket> buscarPorId(Long id);
+
+    // Crear nuevo ticket
+    Ticket guardar(Ticket ticket);
+
+    // Actualizar ticket existente
+    Ticket actualizar(Long id, Ticket ticket);
+
+    // Desactivar ticket (NO ELIMINA)
+    void eliminar(Long id);
 
     // Filtros
+    // Busca ticket por código, usa optional para evitar errores de inexistencia
+    Optional<Ticket> buscarPorCodigo(String codigo);
 
-    List<Ticket> listarPorEmpresa(Long empresaId); //Por empresa
-    List<Ticket> listarPorCliente(Long clienteId); //Por usuario
-    List<Ticket> listarPorAgente(Long agenteId); //Por agente de soporte
-    List<Ticket> listarPorCategoria(Long categoriaId); //Por categoria
-    List<Ticket> listarPorEstado(EstadoTicket estado); //Por estado
-    List<Ticket> listarPorPrioridad(PrioridadTicket prioridad); //Por prioridad
+    // Lista tickets por empresa, cliente, agente asignado, categoría, estado o prioridad
+    List<Ticket> listarPorEmpresaId(Long empresaId);
+
+    List<Ticket> listarPorClienteId(Long clienteId);
+
+    List<Ticket> listarPorAgenteAsignadoId(Long agenteAsignadoId);
+
+    List<Ticket> listarPorCategoriaId(Long categoriaId);
+
+    List<Ticket> listarPorEstado(EstadoTicket estado);
+
+    List<Ticket> listarPorPrioridad(PrioridadTicket prioridad);
+
+    // Lista tickets por empresa y estado o prioridad
+    List<Ticket> listarPorEmpresaIdYEstado(Long empresaId, EstadoTicket estado);
+
+    List<Ticket> listarPorEmpresaIdYPrioridad(Long empresaId, PrioridadTicket prioridad);
+    
+    // Verifica si existe ticket por código, para evitar duplicados
+    boolean existePorCodigo(String codigo);
 }

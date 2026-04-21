@@ -7,24 +7,42 @@ import com.helpdesk.helpdesk_backend.model.Usuario;
 
 public interface UsuarioService {
 
-    List<Usuario> findAll();
+    //Buscar todos los usuarios
+    List<Usuario> listarTodos();
 
-    Usuario findById(Long id);
+    //Buscar usuario por id, usa optional para evitar errores de inexistencia
+    Optional<Usuario> buscarPorId(Long id);
 
-    Optional<Usuario> findByEmail(String email);
+    //Crear nuevo usuario
+    Usuario guardar(Usuario usuario);
 
-    List<Usuario> findByEmpresaId(Long empresaId);
+    //Actualizar usuario existente
+    Usuario actualizar(Long id, Usuario usuario);
 
-    List<Usuario> findByEmpresaIdAndRolNombre(Long empresaId, String rolNombre);
+    //Desactivar usuario (NO ELIMINA)
+    void eliminar(Long id);
 
-    List<Usuario> findByEstado(boolean estado);
-
-    Usuario save(Usuario usuario);
-
-    Usuario update(Long id, Usuario usuario);
-
-    void deleteById(Long id);
-
+    // Filtros
+    //Busca usuario por email, usa optional para evitar errores de inexistencia
+    Optional<Usuario> buscarPorEmail(String email);
+    
+    //Verifica si existe usuario por email, para evitar duplicados
     boolean existsByEmail(String email);
+
+    //Lista usuarios por empresa
+    List<Usuario> listarPorEmpresa(Long empresaId);
+
+    //Lista usuarios por rol
+    List<Usuario> listarPorRol (Long rolId);
+
+    //Lista usuarios activos por empresa
+    List<Usuario> listarActivosPorEmpresa(Long empresaId, boolean activo);
+
+    //Lista usuarios por empresa y rol
+    List<Usuario> listarPorEmpresaYRol(Long empresaId, Long rolId);
+
+    //Lista usuarios por estado activo/inactivo
+    List<Usuario> listarPorEstado(boolean activo);
+
 }
 
