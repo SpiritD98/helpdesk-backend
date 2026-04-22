@@ -1,4 +1,9 @@
+package com.helpdesk.helpdesk_backend.service;
+
+import com.helpdesk.helpdesk_backend.model.Usuario;
 import com.helpdesk.helpdesk_backend.repository.UsuarioRepository;
+import com.helpdesk.helpdesk_backend.service.impl.UsuarioServiceImpl;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
