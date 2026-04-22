@@ -1,4 +1,4 @@
-package com.helpdesk.helpdesk_backend.service.impl;
+package com.helpdesk.helpdesk_backend.service;
 
 import com.helpdesk.helpdesk_backend.model.Empresa;
 import com.helpdesk.helpdesk_backend.repository.EmpresaRepository;
@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -141,6 +142,44 @@ class EmpresaServiceImplTest {
         assertNotNull(result);
         verify(empresaRepository, times(1)).save(any(Empresa.class));
     }
+
+    @Test
+    void actualizar_conNuevosDatosValidos_exitoso(){
+        // Arrage: La empresa existente con datos viejos
+        Empresa empresaExistente = new Empresa();
+        empresaExistente.setId(1L);
+        empresaExistente.setRuc("20000000000"); // RUC viejo
+        empresaExistente.setCorreoContacto("viejo@correo.com"); // Correo viejo
+        
+        // La empresa actualizada con nuevos datos válidos
+        Empresa empresaActualizada = new Empresa();
+        empresaActualizada.setNombre("Nueva Empresa Tech");
+        empresaActualizada.setRuc("20999999999"); // RUC nuevo
+        empresaActualizada.setCorreoContacto("nuevo@correo.com"); // Correo nuevo
+        empresaActualizada.setTelefonoContacto("123456789");
+        empresaActualizada.setActivo(true);
+
+        // Simulamos que encuentra la empresa original
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresaExistente));
+
+        // Simulamos que los NUEVOS datos no existen en la BD (Validación exitosa)
+        when(empresaRepository.existsByRuc("20999999999")).thenReturn(false);
+        when(empresaRepository.existsByCorreoContacto("nuevo@correo.com")).thenReturn(false);
+        
+        // Simulamos el guardado
+        when(empresaRepository.save(any(Empresa.class))).thenReturn(empresaExistente);
+
+        // Act: Ejecutamos la actualización
+        Empresa result = empresaService.actualizar(1L, empresaActualizada);
+
+        // Assert: Verificamos que se guardó la empresa con los nuevos datos
+        assertNotNull(result);
+        verify(empresaRepository).findById(1L);
+        verify(empresaRepository).existsByRuc("20999999999");
+        verify(empresaRepository).existsByCorreoContacto("nuevo@correo.com");
+        verify(empresaRepository).save(any(Empresa.class));
+    }
+
 
     @Test
     void actualizar_noExiste() {

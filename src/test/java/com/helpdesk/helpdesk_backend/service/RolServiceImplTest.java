@@ -10,9 +10,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -273,5 +276,34 @@ class RolServiceImplTest {
         assertTrue(excepcion.getMessage().contains("no encontrado"));
         verify(rolRepository).existsById(1L);
         verify(rolRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void listarTodos_exitoso(){
+        // Arrange: Creamos una lista simulada de roles
+        Rol rol1 = new Rol();
+        rol1.setId(1L);
+        rol1.setNombre("ADMIN");
+
+        Rol rol2 = new Rol();
+        rol2.setId(2L);
+        rol2.setNombre("CLIENTE");
+
+        List<Rol> listaRoles = Arrays.asList(rol1, rol2);
+
+        // Simulamos que el repositorio devuelve esta lista
+        when(rolRepository.findAll()).thenReturn(listaRoles);
+
+        // Act: Llamamos al método listarTodos
+        List<Rol> resultado = rolService.listarTodos();
+
+        // Assert: Verificamos que la lista no sea nula y tenga el tamaño correcto
+        assertNotNull(resultado);
+        assertEquals(2, resultado.size());
+        assertEquals("ADMIN", resultado.get(0).getNombre());
+        assertEquals("CLIENTE", resultado.get(1).getNombre());
+        
+        // Verificamos que se llamó al repositorio
+        verify(rolRepository).findAll();
     }
 }
