@@ -3,9 +3,10 @@ package com.helpdesk.helpdesk_backend.controller;
 import com.helpdesk.helpdesk_backend.model.ProblemaTicket;
 import com.helpdesk.helpdesk_backend.service.ProblemaTicketService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -13,68 +14,89 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ProblemaTicketControllerTest {
-    //Crea un servicio falso
+
     @Mock
-    private ProblemaTicketService service;
-    //Inyecta el mock dentro del controller
+    private ProblemaTicketService problemaTicketService;
+
     @InjectMocks
-    private ProblemaTicketController controller;
-    //Inicializa los mocks antes de ejecutar pruebas
-    public ProblemaTicketControllerTest() {
-        MockitoAnnotations.openMocks(this);
-    }
+    private ProblemaTicketController problemaTicketController;
 
     @Test
     void listarTodos() {
-        //Crea una lista simulada con un objeto
-        List<ProblemaTicket> lista = List.of(new ProblemaTicket());
-        when(service.listarTodos()).thenReturn(lista);//Define comportamiento del mock:  devuelve lista cuando se llame
-        //Ejecuta el método real del controller
-        ResponseEntity<List<ProblemaTicket>> response = controller.listarTodos();
-        //Verifica que responde 200 OK
+        when(problemaTicketService.listarTodos()).thenReturn(List.of(new ProblemaTicket()));
+        
+        ResponseEntity<List<ProblemaTicket>> response = problemaTicketController.listarTodos();
+        
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());//Verifica que el body no sea null
-        assertEquals(1, response.getBody().size());//Verifica que hay 1 elemento
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
     }
 
     @Test
     void buscarPorId_existente() {
-        ProblemaTicket p = new ProblemaTicket();
-        //Simula que el registro existe
-        when(service.buscarPorId(1L)).thenReturn(Optional.of(p));
-        //Ejecuta el método
-        ResponseEntity<ProblemaTicket> response = controller.buscarPorId(1L);
-        assertEquals(HttpStatus.OK, response.getStatusCode());//Debe devolver 200 OK
-        assertNotNull(response.getBody());// Debe tener datos
+        ProblemaTicket problema = new ProblemaTicket();
+        when(problemaTicketService.buscarPorId(1L)).thenReturn(Optional.of(problema));
+        
+        ResponseEntity<ProblemaTicket> response = problemaTicketController.buscarPorId(1L);
+        
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
     }
 
     @Test
     void buscarPorId_noExiste() {
-        when(service.buscarPorId(1L)).thenReturn(Optional.empty()); //Simula que no existe
-        ResponseEntity<ProblemaTicket> response = controller.buscarPorId(1L);
-        //Debe devolver 404 Not Found
+        when(problemaTicketService.buscarPorId(1L)).thenReturn(Optional.empty());
+        
+        ResponseEntity<ProblemaTicket> response = problemaTicketController.buscarPorId(1L);
+        
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
+    void listarPorCategoria() {
+        when(problemaTicketService.listarPorCategoriaId(10L)).thenReturn(List.of(new ProblemaTicket(), new ProblemaTicket()));
+        
+        ResponseEntity<List<ProblemaTicket>> response = problemaTicketController.listarPorCategoria(10L);
+        
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
+    }
+
+    @Test
     void guardar() {
-        ProblemaTicket p = new ProblemaTicket();
-        when(service.guardar(p)).thenReturn(p);//Simula guardado
-        //Ejecutamos el método real del controller
-        ResponseEntity<ProblemaTicket> response = controller.guardar(p);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());//Debe devolver 201
+        ProblemaTicket problema = new ProblemaTicket();
+        when(problemaTicketService.guardar(any(ProblemaTicket.class))).thenReturn(problema);
+        
+        ResponseEntity<ProblemaTicket> response = problemaTicketController.guardar(new ProblemaTicket());
+        
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+    }
+
+    @Test
+    void actualizar() {
+        ProblemaTicket problema = new ProblemaTicket();
+        when(problemaTicketService.actualizar(eq(1L), any(ProblemaTicket.class))).thenReturn(problema);
+        
+        ResponseEntity<ProblemaTicket> response = problemaTicketController.actualizar(1L, new ProblemaTicket());
+        
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
     }
 
     @Test
     void eliminar() {
-        doNothing().when(service).eliminar(1L);//Simula eliminación sin error
-        ResponseEntity<Void> response = controller.eliminar(1L);
-        //Debe devolver 204 No Content
+        doNothing().when(problemaTicketService).eliminar(1L);
+        
+        ResponseEntity<Void> response = problemaTicketController.eliminar(1L);
+        
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(service, times(1)).eliminar(1L);//Verifica que el método se ejecutó una vez
+        verify(problemaTicketService, times(1)).eliminar(1L);
     }
 }
