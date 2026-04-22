@@ -1,3 +1,5 @@
+package com.helpdesk.helpdesk_backend.controller;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -5,6 +7,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import com.helpdesk.helpdesk_backend.model.Usuario;
+import com.helpdesk.helpdesk_backend.service.UsuarioService;
 
 import java.util.List;
 import java.util.Optional;
