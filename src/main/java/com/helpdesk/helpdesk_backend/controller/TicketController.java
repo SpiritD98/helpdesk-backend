@@ -64,6 +64,22 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.actualizar(id, ticket));
     }
 
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Ticket> actualizarEstado(@PathVariable Long id, @RequestBody java.util.Map<String, String> updates) {
+        // Obtenemos el nuevo estado del JSON enviado en Postman: {"estado": "RESUELTO"}
+        String nuevoEstadoStr = updates.get("estado");
+        if (nuevoEstadoStr == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        // Convertimos el texto ("RESUELTO") al tipo Enum (EstadoTicket.RESUELTO)
+        com.helpdesk.helpdesk_backend.model.enums.EstadoTicket estado = com.helpdesk.helpdesk_backend.model.enums.EstadoTicket.valueOf(nuevoEstadoStr.toUpperCase());
+        
+        // Llamamos al servicio que creamos en el paso anterior
+        return ResponseEntity.ok(ticketService.actualizarEstado(id, estado));
+    }
+
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         ticketService.eliminar(id);
