@@ -14,6 +14,9 @@ public interface TicketService {
     Ticket actualizar(Long id, Ticket ticket);
     void eliminar(Long id);
 
+    Ticket actualizarEstado(Long id, EstadoTicket nuevoEstado);
+
+
     Optional<Ticket> buscarPorCodigo(String codigo);
     List<Ticket> listarPorEmpresaId(Long empresaId);
     List<Ticket> listarPorClienteId(Long clienteId);
