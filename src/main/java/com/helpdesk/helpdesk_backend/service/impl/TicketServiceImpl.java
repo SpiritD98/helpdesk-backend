@@ -104,6 +104,20 @@ public class TicketServiceImpl implements TicketService {
         ticketRepository.deleteById(id);
     }
 
+        @Override
+    public Ticket actualizarEstado(Long id, EstadoTicket nuevoEstado) {
+        // 1 Busca el ticket
+        Ticket ticketExistente = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Error: Ticket no encontrado con el id " + id));
+        
+        // 2 Le cambia solo el estado
+        ticketExistente.setEstado(nuevoEstado);
+        
+        // 3 Lo guarda
+        return ticketRepository.save(ticketExistente);
+    }
+
+
     @Override
     @Transactional(readOnly = true)
     public Optional<Ticket> buscarPorCodigo(String codigo) {
