@@ -65,7 +65,7 @@ public class TicketServiceImpl implements TicketService{
             ticket.setAgenteAsignado(usuarioRepository.getReferenceById(ticket.getAgenteAsignado().getId()));
         }
 
-        // Generar un código único si no lo tiene
+        // Generar un codigo unico si no lo tiene
         if (ticket.getCodigo() == null || ticket.getCodigo().isEmpty()) {
             ticket.setCodigo("TCK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         }
