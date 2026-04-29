@@ -10,7 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.helpdesk.helpdesk_backend.model.Ticket;
 import com.helpdesk.helpdesk_backend.model.enums.EstadoTicket;
 import com.helpdesk.helpdesk_backend.model.enums.PrioridadTicket;
+import com.helpdesk.helpdesk_backend.repository.CategoriaTicketRepository;
+import com.helpdesk.helpdesk_backend.repository.EmpresaRepository;
 import com.helpdesk.helpdesk_backend.repository.TicketRepository;
+import com.helpdesk.helpdesk_backend.repository.UsuarioRepository;
 import com.helpdesk.helpdesk_backend.service.TicketService;
 
 @Service
@@ -18,14 +21,14 @@ import com.helpdesk.helpdesk_backend.service.TicketService;
 public class TicketServiceImpl implements TicketService{
     
     private final TicketRepository ticketRepository;
-    private final com.helpdesk.helpdesk_backend.repository.UsuarioRepository usuarioRepository;
-    private final com.helpdesk.helpdesk_backend.repository.EmpresaRepository empresaRepository;
-    private final com.helpdesk.helpdesk_backend.repository.CategoriaTicketRepository categoriaRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final EmpresaRepository empresaRepository;
+    private final CategoriaTicketRepository categoriaRepository;
 
     public TicketServiceImpl(TicketRepository ticketRepository,
-                             com.helpdesk.helpdesk_backend.repository.UsuarioRepository usuarioRepository,
-                             com.helpdesk.helpdesk_backend.repository.EmpresaRepository empresaRepository,
-                             com.helpdesk.helpdesk_backend.repository.CategoriaTicketRepository categoriaRepository) {
+                             UsuarioRepository usuarioRepository,
+                             EmpresaRepository empresaRepository,
+                             CategoriaTicketRepository categoriaRepository) {
         this.ticketRepository = ticketRepository;
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
