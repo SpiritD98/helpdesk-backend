@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class HelpdeskBackendApplication {
 
-	// forzar hora local en peru
+	// forzar hora local en peru , America.
 
 	@PostConstruct
 	public void init() {
