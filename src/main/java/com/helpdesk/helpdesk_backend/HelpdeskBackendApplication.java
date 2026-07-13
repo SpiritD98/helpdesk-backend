@@ -9,10 +9,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class HelpdeskBackendApplication {
 
+	// forzar hora local en peru
+
 	@PostConstruct
 	public void init() {
 		TimeZone.setDefault(TimeZone.getTimeZone("America/Lima"));
 	}
+
+  
 
 	public static void main(String[] args) {
 		SpringApplication.run(HelpdeskBackendApplication.class, args);
