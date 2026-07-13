@@ -59,6 +59,32 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
         // Buscar ticket por ID y empresa (validación de seguridad multi-tenant)
         Optional<Ticket> findByIdAndEmpresaId(Long id, Long empresaId);
 
+        // ── Variantes acotadas al tenant (prevención de fuga cross-tenant) ──
+        // Todos los listados globales del controller se resuelven con estas queries
+        // cuando el usuario NO es ADMIN_OWNER, filtrando siempre por empresa.id.
+
+        Optional<Ticket> findByCodigoAndEmpresaId(String codigo, Long empresaId);
+
+        List<Ticket> findByClienteIdAndEmpresaId(Long clienteId, Long empresaId);
+
+        List<Ticket> findByAgenteAsignadoIdAndEmpresaId(Long agenteAsignadoId, Long empresaId);
+
+        List<Ticket> findByEstadoAndEmpresaId(EstadoTicket estado, Long empresaId);
+
+        List<Ticket> findByPrioridadAndEmpresaId(PrioridadTicket prioridad, Long empresaId);
+
+        List<Ticket> findByCategoriaIdAndEmpresaId(Long categoriaId, Long empresaId);
+
+        @Query("SELECT t FROM Ticket t " +
+                        "LEFT JOIN FETCH t.cliente " +
+                        "WHERE t.agenteAsignado.id = :agenteId " +
+                        "AND t.estado = :estado " +
+                        "AND t.empresa.id = :empresaId " +
+                        "ORDER BY t.prioridad DESC, t.fechaCreacion ASC")
+        List<Ticket> findByAgenteYEstadoYEmpresaId(@Param("agenteId") Long agenteId,
+                        @Param("estado") EstadoTicket estado,
+                        @Param("empresaId") Long empresaId);
+
         // ─────────────────────────────────────────────────────
         // CONSULTAS JPQL PERSONALIZADAS (JOIN + WHERE + ORDER BY)
         // ─────────────────────────────────────────────────────

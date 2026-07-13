@@ -19,6 +19,7 @@ import com.helpdesk.helpdesk_backend.dto.CalificacionRequestDTO;
 import com.helpdesk.helpdesk_backend.dto.CierreRequestDTO;
 import com.helpdesk.helpdesk_backend.dto.TicketAnonimoRequestDTO;
 import com.helpdesk.helpdesk_backend.model.CategoriaTicket;
+import com.helpdesk.helpdesk_backend.model.Empresa;
 import com.helpdesk.helpdesk_backend.model.ProblemaTicket;
 import com.helpdesk.helpdesk_backend.model.Ticket;
 import com.helpdesk.helpdesk_backend.model.TicketComentario;
@@ -121,7 +122,72 @@ public class TicketServiceImpl implements TicketService{
      */
     @Override
     public Ticket guardar(Ticket ticket) {
-        // Generar código único en el service (formato: TCK-XXXX)
+        Long empresaIdDelToken = SecurityUtils.getCurrentUserEmpresaId();
+        Long usuarioIdDelToken = SecurityUtils.getCurrentUserId();
+
+        // 1. Empresa: se deriva SIEMPRE del JWT firmado, nunca del body, para
+        //    evitar que un usuario crea el ticket atribuido a la empresa de otro
+        //    tenant. Solo ADMIN_OWNER puede indicar la empresa en el body.
+        Long empresaId;
+        if (SecurityUtils.isAdminOwner()
+                && ticket.getEmpresa() != null && ticket.getEmpresa().getId() != null) {
+            empresaId = ticket.getEmpresa().getId();
+        } else {
+            if (empresaIdDelToken == null) {
+                throw new IllegalArgumentException(
+                        "No se pudo determinar la empresa del usuario autenticado.");
+            }
+            empresaId = empresaIdDelToken;
+        }
+        Empresa empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Empresa no encontrada con id: " + empresaId));
+
+        // 2. Cliente: se fuerza al usuario autenticado (no se acepta del body).
+        if (usuarioIdDelToken == null) {
+            throw new IllegalArgumentException("No se pudo determinar el usuario autenticado.");
+        }
+        Usuario cliente = usuarioRepository.findById(usuarioIdDelToken)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Usuario no encontrado con id: " + usuarioIdDelToken));
+
+        // 3. Categoría: debe existir y pertenecer a la empresa del ticket.
+        CategoriaTicket categoria = null;
+        if (ticket.getCategoria() != null && ticket.getCategoria().getId() != null) {
+            categoria = categoriaRepository.findById(ticket.getCategoria().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Categoría no encontrada con id: " + ticket.getCategoria().getId()));
+            if (!categoria.getEmpresa().getId().equals(empresaId)) {
+                throw new IllegalArgumentException(
+                        "La categoría seleccionada no pertenece a la empresa del ticket.");
+            }
+        }
+
+        // 4. Problema: opcional, debe estar activo y pertenecer a la categoría.
+        ProblemaTicket problema = null;
+        if (ticket.getProblema() != null && ticket.getProblema().getId() != null) {
+            problema = problemaRepository.findById(ticket.getProblema().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Problema no encontrado con id: " + ticket.getProblema().getId()));
+            if (!problema.isActivo()) {
+                throw new IllegalArgumentException("El problema seleccionado ya no está disponible.");
+            }
+            if (categoria == null || !problema.getCategoria().getId().equals(categoria.getId())) {
+                throw new IllegalArgumentException(
+                        "El problema seleccionado no pertenece a la categoría elegida.");
+            }
+        }
+
+        // 5. Agente asignado: opcional, debe pertenecer a la empresa del ticket.
+        Usuario agenteAsignado = null;
+        if (ticket.getAgenteAsignado() != null && ticket.getAgenteAsignado().getId() != null) {
+            agenteAsignado = usuarioRepository.findByIdAndEmpresaId(
+                            ticket.getAgenteAsignado().getId(), empresaId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Agente no encontrado o no pertenece a la empresa del ticket"));
+        }
+
+        // Generar código único (formato: TCK-XXXX)
         String codigo = "TCK-" + (1000 + new java.util.Random().nextInt(9000));
         ticket.setCodigo(codigo);
 
@@ -133,8 +199,12 @@ public class TicketServiceImpl implements TicketService{
             ticket.setPrioridad(PrioridadTicket.MEDIA);
         }
 
-        // Resolver entidades anidadas (evita errores de entidades desconectadas)
-        resolverReferencias(ticket);
+        // Se asignan SOLO las referencias ya validadas (jamás las del body crudo).
+        ticket.setEmpresa(empresa);
+        ticket.setCliente(cliente);
+        ticket.setCategoria(categoria);
+        ticket.setProblema(problema);
+        ticket.setAgenteAsignado(agenteAsignado);
 
         return ticketRepository.save(ticket);
     }
@@ -304,6 +374,12 @@ public class TicketServiceImpl implements TicketService{
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Ticket> buscarPorCodigoYEmpresa(String codigo, Long empresaId) {
+        return ticketRepository.findByCodigoAndEmpresaId(codigo, empresaId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Ticket> listarPorEmpresaId(Long empresaId) {
         return ticketRepository.findByEmpresaId(empresaId);
     }
@@ -323,8 +399,20 @@ public class TicketServiceImpl implements TicketService{
 
     @Override
     @Transactional(readOnly = true)
+    public List<Ticket> listarPorClienteId(Long clienteId, Long empresaId) {
+        return ticketRepository.findByClienteIdAndEmpresaId(clienteId, empresaId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Ticket> listarPorAgenteAsignadoId(Long agenteAsignadoId) {
         return ticketRepository.findByAgenteAsignadoId(agenteAsignadoId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> listarPorAgenteAsignadoId(Long agenteAsignadoId, Long empresaId) {
+        return ticketRepository.findByAgenteAsignadoIdAndEmpresaId(agenteAsignadoId, empresaId);
     }
 
     @Override
@@ -335,14 +423,32 @@ public class TicketServiceImpl implements TicketService{
 
     @Override
     @Transactional(readOnly = true)
+    public List<Ticket> listarPorCategoriaId(Long categoriaId, Long empresaId) {
+        return ticketRepository.findByCategoriaIdAndEmpresaId(categoriaId, empresaId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Ticket> listarPorEstado(EstadoTicket estado) {
         return ticketRepository.findByEstado(estado);
     }
 
     @Override
     @Transactional(readOnly = true)
+    public List<Ticket> listarPorEstado(EstadoTicket estado, Long empresaId) {
+        return ticketRepository.findByEstadoAndEmpresaId(estado, empresaId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Ticket> listarPorPrioridad(PrioridadTicket prioridad) {
         return ticketRepository.findByPrioridad(prioridad);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> listarPorPrioridad(PrioridadTicket prioridad, Long empresaId) {
+        return ticketRepository.findByPrioridadAndEmpresaId(prioridad, empresaId);
     }
 
     @Override
@@ -387,6 +493,12 @@ public class TicketServiceImpl implements TicketService{
     @Transactional(readOnly = true)
     public List<Ticket> listarPorAgenteYEstado(Long agenteId, EstadoTicket estado) {
         return ticketRepository.findByAgenteYEstado(agenteId, estado);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ticket> listarPorAgenteYEstado(Long agenteId, EstadoTicket estado, Long empresaId) {
+        return ticketRepository.findByAgenteYEstadoYEmpresaId(agenteId, estado, empresaId);
     }
 
     @Override
@@ -598,28 +710,6 @@ public class TicketServiceImpl implements TicketService{
             return ticketRepository.rankingMejoresAgentes(null);
         }
         return ticketRepository.rankingMejoresAgentes(empresaId);
-    }
-
-    /**
-     * Método privado para resolver las entidades anidadas que llegan del JSON
-     * con solo su ID, obteniendo las referencias reales de la BD.
-     */
-    private void resolverReferencias(Ticket ticket) {
-        if (ticket.getCliente() != null && ticket.getCliente().getId() != null) {
-            ticket.setCliente(usuarioRepository.getReferenceById(ticket.getCliente().getId()));
-        }
-        if (ticket.getEmpresa() != null && ticket.getEmpresa().getId() != null) {
-            ticket.setEmpresa(empresaRepository.getReferenceById(ticket.getEmpresa().getId()));
-        }
-        if (ticket.getCategoria() != null && ticket.getCategoria().getId() != null) {
-            ticket.setCategoria(categoriaRepository.getReferenceById(ticket.getCategoria().getId()));
-        }
-        if (ticket.getProblema() != null && ticket.getProblema().getId() != null) {
-            ticket.setProblema(problemaRepository.getReferenceById(ticket.getProblema().getId()));
-        }
-        if (ticket.getAgenteAsignado() != null && ticket.getAgenteAsignado().getId() != null) {
-            ticket.setAgenteAsignado(usuarioRepository.getReferenceById(ticket.getAgenteAsignado().getId()));
-        }
     }
 
     /**

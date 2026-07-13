@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +32,7 @@ import com.helpdesk.helpdesk_backend.model.Ticket;
 import com.helpdesk.helpdesk_backend.model.enums.EstadoTicket;
 import com.helpdesk.helpdesk_backend.model.enums.PrioridadTicket;
 import com.helpdesk.helpdesk_backend.security.TenantSecurity;
+import com.helpdesk.helpdesk_backend.security.SecurityUtils;
 import com.helpdesk.helpdesk_backend.service.FileStorageService;
 import com.helpdesk.helpdesk_backend.service.TicketService;
 
@@ -57,7 +59,12 @@ public class TicketController {
     @GetMapping
     public ResponseEntity<List<Ticket>> listarTodos(
             @RequestParam(required = false) Boolean agente) {
-        return ResponseEntity.ok(ticketService.listarTodos(agente));
+        // El ADMIN_OWNER ve todos los tickets del SaaS; el resto solo los de su tenant.
+        if (SecurityUtils.isAdminOwner()) {
+            return ResponseEntity.ok(ticketService.listarTodos(agente));
+        }
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(ticketService.listarPorEmpresaId(empresaId, agente));
     }
 
     @GetMapping("/{id}")
@@ -70,9 +77,11 @@ public class TicketController {
 
     @GetMapping("/codigo/{codigo}")
     public ResponseEntity<Ticket> buscarPorCodigo(@PathVariable String codigo) {
-        return ticketService.buscarPorCodigo(codigo)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Long empresaId = tenant.getEmpresaId();
+        Optional<Ticket> resultado = SecurityUtils.isAdminOwner()
+                ? ticketService.buscarPorCodigo(codigo)
+                : ticketService.buscarPorCodigoYEmpresa(codigo, empresaId);
+        return resultado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/empresa/{empresaId}")
@@ -85,29 +94,44 @@ public class TicketController {
 
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<Ticket>> listarPorCliente(@PathVariable Long clienteId) {
-        return ResponseEntity.ok(ticketService.listarPorClienteId(clienteId));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorClienteId(clienteId)
+                : ticketService.listarPorClienteId(clienteId, empresaId));
     }
 
     @GetMapping("/agente/{agenteId}")
     public ResponseEntity<List<Ticket>> listarPorAgente(@PathVariable Long agenteId) {
-        return ResponseEntity.ok(ticketService.listarPorAgenteAsignadoId(agenteId));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorAgenteAsignadoId(agenteId)
+                : ticketService.listarPorAgenteAsignadoId(agenteId, empresaId));
     }
 
     // ── Endpoints de filtros ──
 
     @GetMapping("/estado/{estado}")
     public ResponseEntity<List<Ticket>> listarPorEstado(@PathVariable EstadoTicket estado) {
-        return ResponseEntity.ok(ticketService.listarPorEstado(estado));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorEstado(estado)
+                : ticketService.listarPorEstado(estado, empresaId));
     }
 
     @GetMapping("/prioridad/{prioridad}")
     public ResponseEntity<List<Ticket>> listarPorPrioridad(@PathVariable PrioridadTicket prioridad) {
-        return ResponseEntity.ok(ticketService.listarPorPrioridad(prioridad));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorPrioridad(prioridad)
+                : ticketService.listarPorPrioridad(prioridad, empresaId));
     }
 
     @GetMapping("/categoria/{categoriaId}")
     public ResponseEntity<List<Ticket>> listarPorCategoria(@PathVariable Long categoriaId) {
-        return ResponseEntity.ok(ticketService.listarPorCategoriaId(categoriaId));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorCategoriaId(categoriaId)
+                : ticketService.listarPorCategoriaId(categoriaId, empresaId));
     }
 
     // ── Endpoints con queries JPQL personalizadas ──
@@ -141,7 +165,10 @@ public class TicketController {
     public ResponseEntity<List<Ticket>> listarPorAgenteYEstado(
             @PathVariable Long agenteId,
             @PathVariable EstadoTicket estado) {
-        return ResponseEntity.ok(ticketService.listarPorAgenteYEstado(agenteId, estado));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorAgenteYEstado(agenteId, estado)
+                : ticketService.listarPorAgenteYEstado(agenteId, estado, empresaId));
     }
 
     @GetMapping("/empresa/{empresaId}/periodo")
@@ -163,7 +190,10 @@ public class TicketController {
 
     @GetMapping("/prioridad-alta")
     public ResponseEntity<List<Ticket>> listarPrioridadAltaGlobal() {
-        return ResponseEntity.ok(ticketService.listarPrioridadAltaGlobal());
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPrioridadAltaGlobal()
+                : ticketService.listarPrioridadAltaPorEmpresa(empresaId));
     }
 
     // ── 4 nuevas consultas JPQL ──
@@ -184,7 +214,10 @@ public class TicketController {
 
     @GetMapping("/sin-asignar")
     public ResponseEntity<List<Ticket>> listarSinAsignarGlobal() {
-        return ResponseEntity.ok(ticketService.listarSinAsignarGlobal());
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarSinAsignarGlobal()
+                : ticketService.listarSinAsignar(empresaId));
     }
 
     @GetMapping("/periodo")
@@ -193,7 +226,10 @@ public class TicketController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
         LocalDateTime desde = inicio.atStartOfDay();
         LocalDateTime hasta = fin.atTime(LocalTime.MAX);
-        return ResponseEntity.ok(ticketService.listarPorPeriodoGlobal(desde, hasta));
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(SecurityUtils.isAdminOwner()
+                ? ticketService.listarPorPeriodoGlobal(desde, hasta)
+                : ticketService.listarPorEmpresaYPeriodo(empresaId, desde, hasta));
     }
 
     @GetMapping("/cliente/{clienteId}/empresa/{empresaId}/detalle")

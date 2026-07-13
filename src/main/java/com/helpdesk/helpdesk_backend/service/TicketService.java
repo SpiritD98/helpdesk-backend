@@ -82,6 +82,22 @@ public interface TicketService {
     // Tickets de un agente filtrados por estado
     List<Ticket> listarPorAgenteYEstado(Long agenteId, EstadoTicket estado);
 
+    // Variantes acotadas al tenant (prevención de fuga cross-tenant).
+    // Solo se invocan para usuarios NO ADMIN_OWNER; filtran siempre por empresa.
+    Optional<Ticket> buscarPorCodigoYEmpresa(String codigo, Long empresaId);
+
+    List<Ticket> listarPorClienteId(Long clienteId, Long empresaId);
+
+    List<Ticket> listarPorAgenteAsignadoId(Long agenteId, Long empresaId);
+
+    List<Ticket> listarPorCategoriaId(Long categoriaId, Long empresaId);
+
+    List<Ticket> listarPorEstado(EstadoTicket estado, Long empresaId);
+
+    List<Ticket> listarPorPrioridad(PrioridadTicket prioridad, Long empresaId);
+
+    List<Ticket> listarPorAgenteYEstado(Long agenteId, EstadoTicket estado, Long empresaId);
+
     List<Ticket> listarPorEmpresaYPeriodo(Long empresaId, LocalDateTime inicio, LocalDateTime fin);
 
     List<Ticket> listarPrioridadAltaPorEmpresa(Long empresaId);

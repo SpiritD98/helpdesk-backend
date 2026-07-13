@@ -110,7 +110,7 @@ class TicketControllerTest {
 
     @Test
     void buscarPorCodigo_debeRetornarTicket() throws Exception {
-        Mockito.when(ticketService.buscarPorCodigo("TCK-1001")).thenReturn(Optional.of(ticket));
+        Mockito.when(ticketService.buscarPorCodigoYEmpresa(anyString(), any())).thenReturn(Optional.of(ticket));
 
         mockMvc.perform(get("/api/tickets/codigo/TCK-1001"))
                 .andExpect(status().isOk())
@@ -119,7 +119,7 @@ class TicketControllerTest {
 
     @Test
     void buscarPorCodigo_noExiste_debeRetornar404() throws Exception {
-        Mockito.when(ticketService.buscarPorCodigo("TCK-9999")).thenReturn(Optional.empty());
+        Mockito.when(ticketService.buscarPorCodigoYEmpresa(anyString(), any())).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/tickets/codigo/TCK-9999"))
                 .andExpect(status().isNotFound());
@@ -136,7 +136,7 @@ class TicketControllerTest {
 
     @Test
     void listarPorCliente_debeRetornarLista() throws Exception {
-        Mockito.when(ticketService.listarPorClienteId(1L)).thenReturn(List.of(ticket));
+        Mockito.when(ticketService.listarPorClienteId(eq(1L), any())).thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/tickets/cliente/1"))
                 .andExpect(status().isOk());
@@ -144,7 +144,7 @@ class TicketControllerTest {
 
     @Test
     void listarPorAgente_debeRetornarLista() throws Exception {
-        Mockito.when(ticketService.listarPorAgenteAsignadoId(1L)).thenReturn(List.of(ticket));
+        Mockito.when(ticketService.listarPorAgenteAsignadoId(eq(1L), any())).thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/tickets/agente/1"))
                 .andExpect(status().isOk());
@@ -152,7 +152,7 @@ class TicketControllerTest {
 
     @Test
     void listarPorEstado_debeRetornarLista() throws Exception {
-        Mockito.when(ticketService.listarPorEstado(EstadoTicket.ABIERTO)).thenReturn(List.of(ticket));
+        Mockito.when(ticketService.listarPorEstado(eq(EstadoTicket.ABIERTO), any())).thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/tickets/estado/ABIERTO"))
                 .andExpect(status().isOk())
@@ -161,7 +161,7 @@ class TicketControllerTest {
 
     @Test
     void listarPorPrioridad_debeRetornarLista() throws Exception {
-        Mockito.when(ticketService.listarPorPrioridad(PrioridadTicket.ALTA)).thenReturn(List.of(ticket));
+        Mockito.when(ticketService.listarPorPrioridad(eq(PrioridadTicket.ALTA), any())).thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/tickets/prioridad/ALTA"))
                 .andExpect(status().isOk());
@@ -169,7 +169,7 @@ class TicketControllerTest {
 
     @Test
     void listarPorCategoria_debeRetornarLista() throws Exception {
-        Mockito.when(ticketService.listarPorCategoriaId(1L)).thenReturn(List.of(ticket));
+        Mockito.when(ticketService.listarPorCategoriaId(eq(1L), any())).thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/tickets/categoria/1"))
                 .andExpect(status().isOk());
@@ -212,7 +212,7 @@ class TicketControllerTest {
 
     @Test
     void listarPorAgenteYEstado_debeRetornarLista() throws Exception {
-        Mockito.when(ticketService.listarPorAgenteYEstado(1L, EstadoTicket.ABIERTO))
+        Mockito.when(ticketService.listarPorAgenteYEstado(eq(1L), eq(EstadoTicket.ABIERTO), any()))
                 .thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/tickets/agente/1/estado/ABIERTO"))

@@ -7,13 +7,19 @@ import com.helpdesk.helpdesk_backend.model.*;
 import com.helpdesk.helpdesk_backend.model.enums.EstadoTicket;
 import com.helpdesk.helpdesk_backend.model.enums.PrioridadTicket;
 import com.helpdesk.helpdesk_backend.repository.*;
+import com.helpdesk.helpdesk_backend.security.UsuarioPrincipal;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -61,6 +67,25 @@ class TicketServiceImplTest {
                 .cliente(cliente)
                 .empresa(empresa)
                 .build();
+
+        // Simula un usuario autenticado (ADMIN_EMPRESA, empresa 1) en el SecurityContext.
+        // guardar() deriva empresa/cliente del JWT firmado y ya NO del body.
+        UsuarioPrincipal principal = new UsuarioPrincipal(
+                1L, "juan@test.com", "pass", 1L, "Tech Solutions", "ADMIN_EMPRESA", true, List.of());
+        Authentication auth = mock(Authentication.class);
+        lenient().when(auth.isAuthenticated()).thenReturn(true);
+        lenient().when(auth.getPrincipal()).thenReturn(principal);
+        SecurityContextHolder.setContext(new SecurityContextImpl(auth));
+
+        // Mocks por defecto requeridos por guardar()/guardarConComentarioInicial()
+        // (lenient: no todos los tests los usan).
+        lenient().when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        lenient().when(usuarioRepository.findById(1L)).thenReturn(Optional.of(cliente));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -89,8 +114,6 @@ class TicketServiceImplTest {
         Ticket nuevo = Ticket.builder()
                 .titulo("Nuevo ticket")
                 .descripcion("Descripción")
-                .cliente(cliente)
-                .empresa(empresa)
                 .build();
 
         Ticket resultado = ticketService.guardar(nuevo);
@@ -106,8 +129,6 @@ class TicketServiceImplTest {
         Ticket nuevo = Ticket.builder()
                 .titulo("Ticket sin estado")
                 .descripcion("desc")
-                .cliente(cliente)
-                .empresa(empresa)
                 .build();
 
         ticketService.guardar(nuevo);
@@ -125,8 +146,6 @@ class TicketServiceImplTest {
                 .descripcion("desc")
                 .estado(EstadoTicket.EN_PROGRESO)
                 .prioridad(PrioridadTicket.CRITICA)
-                .cliente(cliente)
-                .empresa(empresa)
                 .build();
 
         ticketService.guardar(nuevo);
@@ -136,19 +155,19 @@ class TicketServiceImplTest {
     }
 
     @Test
-    void guardar_conReferencias_debeResolverlas() {
+    void guardar_empresaYClienteVienenDelJwt_noDelBody() {
         when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
-        when(usuarioRepository.getReferenceById(1L)).thenReturn(cliente);
-        when(empresaRepository.getReferenceById(1L)).thenReturn(empresa);
-        when(categoriaRepository.getReferenceById(1L)).thenReturn(categoria);
-        when(problemaRepository.getReferenceById(1L)).thenReturn(problema);
-        when(usuarioRepository.getReferenceById(2L)).thenReturn(agente);
+        when(categoriaRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(problemaRepository.findById(1L)).thenReturn(Optional.of(problema));
+        when(usuarioRepository.findByIdAndEmpresaId(2L, 1L)).thenReturn(Optional.of(agente));
 
+        // El body intenta crear el ticket para OTRA empresa/cliente (10/99).
+        // El servicio debe IGNORARLO y usar los del JWT (empresa 1, usuario 1).
         Ticket nuevo = Ticket.builder()
                 .titulo("Ticket con refs")
                 .descripcion("desc")
-                .cliente(cliente)
-                .empresa(empresa)
+                .empresa(Empresa.builder().id(10L).build())
+                .cliente(Usuario.builder().id(99L).build())
                 .categoria(categoria)
                 .problema(problema)
                 .agenteAsignado(agente)
@@ -156,10 +175,14 @@ class TicketServiceImplTest {
 
         ticketService.guardar(nuevo);
 
-        verify(usuarioRepository, atLeastOnce()).getReferenceById(anyLong());
-        verify(empresaRepository).getReferenceById(1L);
-        verify(categoriaRepository).getReferenceById(1L);
-        verify(problemaRepository).getReferenceById(1L);
+        ArgumentCaptor<Ticket> captor = ArgumentCaptor.forClass(Ticket.class);
+        verify(ticketRepository).save(captor.capture());
+        Ticket guardado = captor.getValue();
+        assertEquals(1L, guardado.getEmpresa().getId());
+        assertEquals(1L, guardado.getCliente().getId());
+        assertEquals(categoria, guardado.getCategoria());
+        assertEquals(problema, guardado.getProblema());
+        assertEquals(agente, guardado.getAgenteAsignado());
     }
 
     @Test
