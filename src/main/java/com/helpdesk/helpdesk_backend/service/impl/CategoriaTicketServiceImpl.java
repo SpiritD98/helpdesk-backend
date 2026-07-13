@@ -81,6 +81,14 @@ public class CategoriaTicketServiceImpl implements CategoriaTicketService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<CategoriaResponseDTO> listarActivasGlobal() {
+        return categoriaTicketRepository.findActivasOrdenadas().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<CategoriaResponseDTO> buscarPaginado(Long empresaId, int page, int limit, String search) {
         if (search != null && search.trim().isEmpty()) search = null;
         PageRequest pageable = PageRequest.of(page - 1, limit, Sort.by("nombre").ascending());
@@ -156,5 +164,18 @@ public class CategoriaTicketServiceImpl implements CategoriaTicketService {
 
         categoriaExistente.setActiva(false);
         categoriaTicketRepository.save(categoriaExistente);
+    }
+
+    @Override
+    public CategoriaResponseDTO activarCategoria(Long id, Long empresaId) {
+        CategoriaTicket categoriaExistente = categoriaTicketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría de ticket no encontrada con id: " + id));
+
+        if (!categoriaExistente.getEmpresa().getId().equals(empresaId)) {
+            throw new ResourceNotFoundException("Categoría no pertenece a la empresa indicada");
+        }
+
+        categoriaExistente.setActiva(true);
+        return mapToDTO(categoriaTicketRepository.save(categoriaExistente));
     }
 }

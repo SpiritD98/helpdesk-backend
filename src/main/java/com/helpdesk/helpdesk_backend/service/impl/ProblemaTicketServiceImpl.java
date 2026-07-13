@@ -65,9 +65,9 @@ public class ProblemaTicketServiceImpl implements ProblemaTicketService {
     public PageResponse<ProblemaResponseDTO> listarPaginado(Long empresaId, int page, int limit, Long categoriaId) {
         PageRequest pageable = PageRequest.of(page - 1, limit, Sort.by("nombre").ascending());
         List<ProblemaResponseDTO> data = problemaTicketRepository
-                .findActivosPorEmpresaPaged(empresaId, categoriaId, pageable)
+                .findPorEmpresaPaged(empresaId, categoriaId, pageable)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
-        long total = problemaTicketRepository.countActivosPorEmpresa(empresaId, categoriaId);
+        long total = problemaTicketRepository.countPorEmpresa(empresaId, categoriaId);
         int totalPages = (int) Math.ceil((double) total / limit);
         return new PageResponse<>(data, total, page, totalPages);
     }
@@ -202,5 +202,18 @@ public class ProblemaTicketServiceImpl implements ProblemaTicketService {
 
         problema.setActivo(false);
         problemaTicketRepository.save(problema);
+    }
+
+    @Override
+    public ProblemaResponseDTO activarProblema(Long id, Long empresaId) {
+        ProblemaTicket problema = problemaTicketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Problema no encontrado con id: " + id));
+
+        if (!problema.getCategoria().getEmpresa().getId().equals(empresaId)) {
+            throw new ResourceNotFoundException("El problema no pertenece a la empresa indicada");
+        }
+
+        problema.setActivo(true);
+        return mapToDTO(problemaTicketRepository.save(problema));
     }
 }

@@ -14,6 +14,8 @@ public interface CategoriaTicketService {
 
     List<CategoriaResponseDTO> listarTodasGlobal();
 
+    List<CategoriaResponseDTO> listarActivasGlobal();
+
     PageResponse<CategoriaResponseDTO> buscarPaginado(Long empresaId, int page, int limit, String search);
 
     PageResponse<CategoriaResponseDTO> buscarPaginadoGlobal(int page, int limit, String search);
@@ -25,5 +27,7 @@ public interface CategoriaTicketService {
     CategoriaResponseDTO actualizarCategoria(Long id, CategoriaRequestDTO requestDTO, Long empresaId);
 
     void eliminarCategoria(Long id, Long empresaId);
+
+    CategoriaResponseDTO activarCategoria(Long id, Long empresaId);
 
 }

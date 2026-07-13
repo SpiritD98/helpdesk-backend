@@ -50,6 +50,9 @@ public interface CategoriaTicketRepository extends JpaRepository<CategoriaTicket
     @Query("SELECT c FROM CategoriaTicket c ORDER BY c.nombre ASC")
     List<CategoriaTicket> findAllOrdered();
 
+    @Query("SELECT c FROM CategoriaTicket c WHERE c.activa = true ORDER BY c.nombre ASC")
+    List<CategoriaTicket> findActivasOrdenadas();
+
     // ── Paginadas con búsqueda (empresa-scoped) ──
 
     @Query("SELECT c FROM CategoriaTicket c WHERE c.empresa.id = :empresaId " +

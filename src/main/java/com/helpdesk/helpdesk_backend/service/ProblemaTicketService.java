@@ -16,6 +16,7 @@ public interface ProblemaTicketService {
     ProblemaResponseDTO crearProblema(ProblemaRequestDTO requestDTO, Long empresaId);
     ProblemaResponseDTO actualizarProblema(Long id, ProblemaRequestDTO requestDTO, Long empresaId);
     void eliminarProblema(Long id, Long empresaId);
+    ProblemaResponseDTO activarProblema(Long id, Long empresaId);
     List<Map<String, Object>> contarProblemasPorCategoria(Long empresaId);
     List<ProblemaResponseDTO> buscarPorTexto(String texto);
 }

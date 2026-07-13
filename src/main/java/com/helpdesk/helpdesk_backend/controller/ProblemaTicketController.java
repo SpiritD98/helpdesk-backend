@@ -91,6 +91,12 @@ public class ProblemaTicketController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<ProblemaResponseDTO> activar(@PathVariable Long id, @RequestParam Long empresaId) {
+        Long resolvedId = tenant.resolveEmpresaId(empresaId);
+        return ResponseEntity.ok(problemaTicketService.activarProblema(id, resolvedId));
+    }
+
     @GetMapping("/conteo-categoria")
     public ResponseEntity<List<Map<String, Object>>> contarPorCategoria(@RequestParam(required = false) Long empresaId) {
         Long resolvedId = tenant.resolveEmpresaId(empresaId);

@@ -48,24 +48,22 @@ public interface ProblemaTicketRepository extends JpaRepository<ProblemaTicket, 
            "ORDER BY p.nombre ASC")
     List<ProblemaTicket> findActivosPorEmpresa(@Param("empresaId") Long empresaId);
 
-    // Listar problemas activos paginados con filtro opcional por categoría
+    // Listar problemas paginados (activos e inactivos) para gestión, con filtro opcional por categoría
     @Query("SELECT p FROM ProblemaTicket p " +
            "JOIN FETCH p.categoria c " +
            "WHERE c.empresa.id = :empresaId " +
-           "AND p.activo = true " +
            "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId)")
-    List<ProblemaTicket> findActivosPorEmpresaPaged(
+    List<ProblemaTicket> findPorEmpresaPaged(
             @Param("empresaId") Long empresaId,
             @Param("categoriaId") Long categoriaId,
             Pageable pageable);
 
-    // Contar problemas activos con filtro opcional por categoría
+    // Contar problemas (activos e inactivos) con filtro opcional por categoría
     @Query("SELECT COUNT(p) FROM ProblemaTicket p " +
            "JOIN p.categoria c " +
            "WHERE c.empresa.id = :empresaId " +
-           "AND p.activo = true " +
            "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId)")
-    long countActivosPorEmpresa(
+    long countPorEmpresa(
             @Param("empresaId") Long empresaId,
             @Param("categoriaId") Long categoriaId);
 
@@ -73,14 +71,12 @@ public interface ProblemaTicketRepository extends JpaRepository<ProblemaTicket, 
 
     @Query("SELECT p FROM ProblemaTicket p " +
            "JOIN FETCH p.categoria c " +
-           "WHERE p.activo = true " +
-           "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId)")
+           "WHERE (:categoriaId IS NULL OR p.categoria.id = :categoriaId)")
     List<ProblemaTicket> findAllPaged(
             @Param("categoriaId") Long categoriaId,
             Pageable pageable);
 
     @Query("SELECT COUNT(p) FROM ProblemaTicket p " +
-           "WHERE p.activo = true " +
-           "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId)")
+           "WHERE (:categoriaId IS NULL OR p.categoria.id = :categoriaId)")
     long countAll(@Param("categoriaId") Long categoriaId);
 }

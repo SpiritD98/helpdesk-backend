@@ -51,6 +51,11 @@ public class CategoriaTicketController {
         return ResponseEntity.ok(categoriaTicketService.listarTodasGlobal());
     }
 
+    @GetMapping("/activas/todas")
+    public ResponseEntity<List<CategoriaResponseDTO>> listarActivasGlobal() {
+        return ResponseEntity.ok(categoriaTicketService.listarActivasGlobal());
+    }
+
     @GetMapping("/paginado")
     public ResponseEntity<PageResponse<CategoriaResponseDTO>> listarPaginado(
             @RequestParam Long empresaId,
@@ -100,5 +105,11 @@ public class CategoriaTicketController {
         Long resolvedId = tenant.resolveEmpresaId(empresaId);
         categoriaTicketService.eliminarCategoria(id, resolvedId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<CategoriaResponseDTO> activar(@PathVariable Long id, @RequestParam Long empresaId) {
+        Long resolvedId = tenant.resolveEmpresaId(empresaId);
+        return ResponseEntity.ok(categoriaTicketService.activarCategoria(id, resolvedId));
     }
 }
