@@ -53,20 +53,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 3. Si hay email y no hay autenticación previa en el contexto
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            try {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            // 4. Validar el token contra los datos del usuario
-            if (jwtUtil.validateToken(token, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // 4. Validar el token contra los datos del usuario
+                if (jwtUtil.validateToken(token, userDetails.getUsername())) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 5. Establecer la autenticación en el SecurityContext
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    // 5. Establecer la autenticación en el SecurityContext
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            } catch (Exception e) {
+                // Usuario inexistente/desactivado o token inválido: continuar sin autenticar.
             }
         }
 

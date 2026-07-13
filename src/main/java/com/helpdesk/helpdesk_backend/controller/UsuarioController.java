@@ -140,4 +140,10 @@ public class UsuarioController {
         usuarioService.eliminar(id, empresaId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<Usuario> activar(@PathVariable Long id) {
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(usuarioService.activar(id, empresaId));
+    }
 }

@@ -115,9 +115,23 @@ public class UsuarioServiceImpl implements UsuarioService{
      */
     @Override
     public void eliminar(Long id, Long empresaId) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        if (currentUserId != null && currentUserId.equals(id)) {
+            throw new IllegalArgumentException("No puedes desactivar tu propia cuenta.");
+        }
         Usuario usuario = obtenerUsuarioDeTenant(id, empresaId);
         usuario.setActivo(false);
         usuarioRepository.save(usuario);
+    }
+
+    /**
+     * Reactiva un usuario (activo = true), restringido a la empresa del tenant.
+     */
+    @Override
+    public Usuario activar(Long id, Long empresaId) {
+        Usuario usuario = obtenerUsuarioDeTenant(id, empresaId);
+        usuario.setActivo(true);
+        return usuarioRepository.save(usuario);
     }
 
     /**

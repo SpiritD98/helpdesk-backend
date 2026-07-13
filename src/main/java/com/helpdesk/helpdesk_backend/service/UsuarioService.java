@@ -15,6 +15,8 @@ public interface UsuarioService {
     Usuario actualizar(Long id, Long empresaId, Usuario usuario);
     // Eliminar (borrado lógico) restringido a la empresa del tenant.
     void eliminar(Long id, Long empresaId);
+    // Reactivar un usuario (activo = true) restringido a la empresa del tenant.
+    Usuario activar(Long id, Long empresaId);
     Optional<Usuario> buscarPorEmail(String email);
     boolean existeEmail(String email);
     List<Usuario> listarPorEmpresa(Long empresaId);
