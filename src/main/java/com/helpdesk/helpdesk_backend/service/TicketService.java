@@ -125,7 +125,16 @@ public interface TicketService {
     Ticket guardarCierre(Long id, Long empresaId, CierreRequestDTO request);
 
     // El cliente dueño califica (1-5 estrellas) la atención de un ticket RESUELTO.
+    // Al calificar, el ticket pasa automáticamente a CERRADO.
     Ticket calificarTicket(Long id, Long empresaId, CalificacionRequestDTO request);
+
+    // El cliente dueño reabre un ticket RESUELTO que no fue satisfactorio.
+    // El ticket vuelve a EN_PROGRESO.
+    Ticket reabrirTicket(Long id, Long empresaId);
+
+    // Cierra automáticamente los tickets RESUELTO con más de 7 días sin respuesta
+    // del cliente. Lo invoca un @Scheduled diario. Devuelve la cantidad cerrada.
+    int cerrarResueltosAutomaticamente();
 
     // Ranking de mejores agentes según el promedio de calificaciones de los clientes.
     // empresaId NULL → vista global del ADMIN_OWNER.

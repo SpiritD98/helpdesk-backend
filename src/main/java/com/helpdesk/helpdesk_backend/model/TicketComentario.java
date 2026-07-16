@@ -51,8 +51,8 @@ public class TicketComentario {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Ticket ticket;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY) // nullable: los comentarios de sistema (auto-cierre) no tienen usuario
+    @JoinColumn(name = "usuario_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Usuario usuario; // El usuario que hizo el comentario
+    private Usuario usuario; // El usuario que hizo el comentario (null si es un comentario de sistema automático)
 }

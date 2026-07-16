@@ -1,6 +1,7 @@
 package com.helpdesk.helpdesk_backend.service.impl;
 
 import com.helpdesk.helpdesk_backend.dto.CambiarEstadoRequestDTO;
+import com.helpdesk.helpdesk_backend.dto.CalificacionRequestDTO;
 import com.helpdesk.helpdesk_backend.dto.CierreRequestDTO;
 import com.helpdesk.helpdesk_backend.exception.ResourceNotFoundException;
 import com.helpdesk.helpdesk_backend.model.*;
@@ -556,5 +557,154 @@ class TicketServiceImplTest {
                 ticketService.guardarCierre(1L, 1L, request));
 
         verify(ticketRepository, never()).save(any());
+    }
+
+    // ─── Flujo canónico: agente resuelve → cliente califica → ticket se CIERRA ───
+
+    @Test
+    void calificarTicket_resuelto_calificaYCierraElTicket() {
+        ticket.setEstado(EstadoTicket.RESUELTO);
+        ticket.setAgenteAsignado(agente); // agente asignado es requerido para calificar
+
+        // El principal simulado tiene id=1, que coincide con el cliente del ticket.
+        CalificacionRequestDTO request = new CalificacionRequestDTO();
+        request.setCalificacion(5);
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(usuarioRepository.getReferenceById(1L)).thenReturn(cliente);
+
+        Ticket resultado = ticketService.calificarTicket(1L, 1L, request);
+
+        assertEquals(Integer.valueOf(5), resultado.getCalificacionAgente());
+        assertEquals(EstadoTicket.CERRADO, resultado.getEstado(),
+                "Calificar un ticket RESUELTO debe cerrarlo automáticamente.");
+        verify(comentarioRepository).save(any());
+    }
+
+    @Test
+    void calificarTicket_otroCliente_lanzaExcepcion() {
+        ticket.setEstado(EstadoTicket.RESUELTO);
+        ticket.setAgenteAsignado(agente);
+
+        // El principal simulado tiene id=1; le ponemos un cliente distinto al ticket.
+        ticket.setCliente(Usuario.builder().id(99L).build());
+
+        CalificacionRequestDTO request = new CalificacionRequestDTO();
+        request.setCalificacion(4);
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                ticketService.calificarTicket(1L, 1L, request));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    void calificarTicket_yaCalificado_lanzaExcepcion() {
+        ticket.setEstado(EstadoTicket.RESUELTO);
+        ticket.setAgenteAsignado(agente);
+        ticket.setCalificacionAgente(3); // ya calificado
+
+        CalificacionRequestDTO request = new CalificacionRequestDTO();
+        request.setCalificacion(5);
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                ticketService.calificarTicket(1L, 1L, request));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    void calificarTicket_noResuelto_lanzaExcepcion() {
+        ticket.setEstado(EstadoTicket.EN_PROGRESO);
+        ticket.setAgenteAsignado(agente);
+
+        CalificacionRequestDTO request = new CalificacionRequestDTO();
+        request.setCalificacion(4);
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                ticketService.calificarTicket(1L, 1L, request));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    // ─── Reapertura: cliente reabre un ticket RESUELTO → vuelve a EN_PROGRESO ───
+
+    @Test
+    void reabrirTicket_resuelto_vuelveAEnProgreso() {
+        ticket.setEstado(EstadoTicket.RESUELTO);
+        // cliente del ticket = id=1 (mismo que el principal simulado)
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(usuarioRepository.getReferenceById(1L)).thenReturn(cliente);
+
+        Ticket resultado = ticketService.reabrirTicket(1L, 1L);
+
+        assertEquals(EstadoTicket.EN_PROGRESO, resultado.getEstado(),
+                "Reabrir un ticket RESUELTO debe devolverlo a EN_PROGRESO.");
+        verify(comentarioRepository).save(any());
+    }
+
+    @Test
+    void reabrirTicket_otroCliente_lanzaExcepcion() {
+        ticket.setEstado(EstadoTicket.RESUELTO);
+        ticket.setCliente(Usuario.builder().id(99L).build()); // otro cliente
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                ticketService.reabrirTicket(1L, 1L));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    @Test
+    void reabrirTicket_cerrado_lanzaExcepcion() {
+        ticket.setEstado(EstadoTicket.CERRADO); // no se puede reabrir un CERRADO
+
+        when(ticketRepository.findByIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(ticket));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                ticketService.reabrirTicket(1L, 1L));
+        verify(ticketRepository, never()).save(any());
+    }
+
+    // ─── Auto-cierre: tickets RESUELTO con >7 días se cierran solos ───
+
+    @Test
+    void cerrarResueltosAutomaticamente_cierraResueltosAntiguos() {
+        Ticket viejo = Ticket.builder()
+                .id(2L).estado(EstadoTicket.RESUELTO)
+                .empresa(empresa).cliente(cliente).build();
+        Ticket reciente = Ticket.builder()
+                .id(3L).estado(EstadoTicket.RESUELTO)
+                .empresa(empresa).cliente(cliente).build();
+
+        // Simulamos que la query devuelve uno antiguo y uno reciente; el service
+        // cierra TODOS los que devuelve la query (el filtro por fecha ya lo hizo la BD).
+        when(ticketRepository.findResueltosAntesDe(any(LocalDateTime.class)))
+                .thenReturn(List.of(viejo));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        int cerrados = ticketService.cerrarResueltosAutomaticamente();
+
+        assertEquals(1, cerrados);
+        assertEquals(EstadoTicket.CERRADO, viejo.getEstado());
+        verify(comentarioRepository).save(any());
+    }
+
+    @Test
+    void cerrarResueltosAutomaticamente_sinResueltosAntiguos_cero() {
+        when(ticketRepository.findResueltosAntesDe(any(LocalDateTime.class)))
+                .thenReturn(List.of());
+
+        int cerrados = ticketService.cerrarResueltosAutomaticamente();
+
+        assertEquals(0, cerrados);
+        verify(ticketRepository, never()).save(any());
+        verify(comentarioRepository, never()).save(any());
     }
 }

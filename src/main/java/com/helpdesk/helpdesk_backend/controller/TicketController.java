@@ -309,6 +309,19 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.calificarTicket(id, empresaId, request));
     }
 
+    // ── Reabrir ticket resuelto ──
+
+    /**
+     * El cliente dueño reabre un ticket RESUELTO cuando la solución no fue
+     * satisfactoria. El ticket vuelve a EN_PROGRESO para que el agente lo
+     * retome. La validación de propiedad se hace en el service.
+     */
+    @PostMapping("/{id}/reabrir")
+    public ResponseEntity<Ticket> reabrirTicket(@PathVariable Long id) {
+        Long empresaId = tenant.getEmpresaId();
+        return ResponseEntity.ok(ticketService.reabrirTicket(id, empresaId));
+    }
+
     /**
      * Ranking de mejores agentes por promedio de calificacion.
      * Cada fila: [agenteId, nombres, apellidos, promedioCalificacion, totalTickets].

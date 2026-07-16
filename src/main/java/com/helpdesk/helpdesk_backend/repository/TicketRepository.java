@@ -265,6 +265,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
         // ─── Ranking de mejores agentes por calificación ───
 
+
         /**
          * Ranking de mejores agentes según el promedio de calificación que los
          * clientes dieron a sus tickets resueltos.
@@ -282,4 +283,14 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
                         "GROUP BY t.agenteAsignado.id, t.agenteAsignado.nombres, t.agenteAsignado.apellidos " +
                         "ORDER BY AVG(t.calificacionAgente) DESC")
         List<Object[]> rankingMejoresAgentes(@Param("empresaId") Long empresaId);
+
+        /**
+         * Tickets en estado RESUELTO cuya fecha de actualización es anterior a
+         * la fecha límite indicada. Se usa para el auto-cierre de tickets que el
+         * cliente nunca calificó ni reabrió (se cierran tras 7 días en RESUELTO).
+         */
+        @Query("SELECT t FROM Ticket t " +
+                        "WHERE t.estado = com.helpdesk.helpdesk_backend.model.enums.EstadoTicket.RESUELTO " +
+                        "AND t.fechaActualizacion < :fechaLimite")
+        List<Ticket> findResueltosAntesDe(@Param("fechaLimite") LocalDateTime fechaLimite);
 }

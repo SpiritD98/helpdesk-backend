@@ -41,9 +41,18 @@ public class TicketServiceImpl implements TicketService{
 
     /**
      * Máquina de estados del ticket. Define qué transiciones son válidas.
-     * CERRADO es terminal: no se puede sacar un ticket de CERRADO.
-     * Las transiciones al mismo estado se tratan como no-op (no se generan
-     * comentarios del sistema) y nunca lanzan excepción.
+     *
+     * Flujo CANÓNICO del helpdesk:
+     *   ABIERTO → EN_PROGRESO → RESUELTO → CERRADO
+     *
+     * - RESUELTO significa "el agente dice que lo arregló; espera confirmación
+     *   del cliente". Desde RESUELTO el cliente puede:
+     *     · calificar  → pasa a CERRADO (terminal)
+     *     · reabrir    → vuelve a EN_PROGRESO
+     *     · no responde → un scheduler lo cierra automáticamente tras 7 días
+     * - CERRADO es terminal: no se puede sacar un ticket de CERRADO.
+     * - Las transiciones al mismo estado se tratan como no-op (no se generan
+     *   comentarios del sistema) y nunca lanzan excepción.
      */
     private static final Map<EstadoTicket, Set<EstadoTicket>> TRANSICIONES_PERMITIDAS;
 
@@ -63,6 +72,9 @@ public class TicketServiceImpl implements TicketService{
         map.put(EstadoTicket.CERRADO, EnumSet.noneOf(EstadoTicket.class));
         TRANSICIONES_PERMITIDAS = Collections.unmodifiableMap(map);
     }
+
+    /** Cantidad de días que un ticket puede quedar en RESUELTO antes del auto-cierre. */
+    public static final int DIAS_PARA_AUTO_CIERRE = 7;
 
     private final TicketRepository ticketRepository;
     private final UsuarioRepository usuarioRepository;
@@ -559,12 +571,12 @@ public class TicketServiceImpl implements TicketService{
     @Override
     public Ticket cambiarEstado(Long id, Long empresaId, CambiarEstadoRequestDTO request) {
         Ticket ticket = obtenerTicketDeTenant(id, empresaId);
-        // Los tickets RESUELTO o CERRADO son de solo lectura: ya no se puede
-        // cambiar su estado (evita reapertura accidental o maliciosa).
-        if (ticket.getEstado() == EstadoTicket.RESUELTO || ticket.getEstado() == EstadoTicket.CERRADO) {
+        // CERRADO es terminal: si ya está cerrado, no se puede cambiar el estado.
+        // RESUELTO sí admite transiciones: el cliente puede reabrir (→ EN_PROGRESO)
+        // o el admin/agente pueden cerrar (→ CERRADO) usando este mismo endpoint.
+        if (ticket.getEstado() == EstadoTicket.CERRADO) {
             throw new IllegalArgumentException(
-                    "No se puede cambiar el estado de un ticket " + ticket.getEstado().name()
-                    + ". El ticket ya está cerrado y es de solo lectura.");
+                    "No se puede cambiar el estado de un ticket CERRADO: es un estado terminal.");
         }
         if (request.getEstado() == EstadoTicket.CERRADO
                 && (request.getJustificacionCierre() == null || request.getJustificacionCierre().isBlank())) {
@@ -595,11 +607,11 @@ public class TicketServiceImpl implements TicketService{
     @Override
     public Ticket asignarAgente(Long id, Long empresaId, Long agenteId) {
         Ticket ticket = obtenerTicketDeTenant(id, empresaId);
-        // Los tickets RESUELTO o CERRADO son de solo lectura: no se reasigna agente.
-        if (ticket.getEstado() == EstadoTicket.RESUELTO || ticket.getEstado() == EstadoTicket.CERRADO) {
+        // CERRADO es terminal: no se reasigna agente. Desde RESUELTO sí se permite
+        // (caso: el cliente reabre y el admin quiere reasignar a otro agente).
+        if (ticket.getEstado() == EstadoTicket.CERRADO) {
             throw new IllegalArgumentException(
-                    "No se puede asignar agente a un ticket " + ticket.getEstado().name()
-                    + ". El ticket ya está cerrado y es de solo lectura.");
+                    "No se puede asignar agente a un ticket CERRADO: es un estado terminal.");
         }
         // El agente debe pertenecer a la MISMA empresa del ticket (no a la del JWT).
         // Así el owner puede asignar agentes a tickets de cualquier empresa,
@@ -647,9 +659,12 @@ public class TicketServiceImpl implements TicketService{
     /**
      * El CLIENTE dueño califica (1-5 estrellas) la atención de un ticket RESUELTO.
      *
+     * Al calificar, el ticket pasa automáticamente a CERRADO (estado terminal).
+     * Es el flujo canónico: el agente resuelve → el cliente califica → se cierra.
+     *
      * Validaciones:
      * - El usuario autenticado debe ser el cliente dueño del ticket.
-     * - El ticket debe estar RESUELTO y tener un agente asignado.
+     * - El ticket debe estar RESUELTO (no ABIERTO/EN_PROGRESO/CERRADO).
      * - No se permite recalificar (si ya tiene calificación, se rechaza).
      */
     @Override
@@ -680,11 +695,14 @@ public class TicketServiceImpl implements TicketService{
         }
 
         ticket.setCalificacionAgente(request.getCalificacion());
+        // La calificación cierra el ticket: RESUELTO → CERRADO.
+        validarTransicion(ticket.getEstado(), EstadoTicket.CERRADO);
+        ticket.setEstado(EstadoTicket.CERRADO);
         Ticket guardado = ticketRepository.save(ticket);
 
-        // Comentario de sistema dejando constancia de la calificación.
+        // Comentario de sistema dejando constancia de la calificación y el cierre.
         String texto = "El cliente calificó la atención con " + request.getCalificacion()
-                + (request.getCalificacion() == 1 ? " estrella." : " estrellas.");
+                + (request.getCalificacion() == 1 ? " estrella. Ticket cerrado." : " estrellas. Ticket cerrado.");
         Usuario usuario = usuarioRepository.getReferenceById(usuarioActual);
         TicketComentario comentario = TicketComentario.builder()
                 .mensaje(texto)
@@ -695,6 +713,81 @@ public class TicketServiceImpl implements TicketService{
         comentarioRepository.save(comentario);
 
         return guardado;
+    }
+
+    /**
+     * El CLIENTE dueño reabre un ticket que estaba RESUELTO porque no está conforme
+     * con la solución dada por el agente. El ticket vuelve a EN_PROGRESO.
+     *
+     * Validaciones:
+     * - El usuario autenticado debe ser el cliente dueño del ticket.
+     * - El ticket debe estar RESUELTO (no se puede reabrir un CERRADO ni uno en curso).
+     */
+    @Override
+    public Ticket reabrirTicket(Long id, Long empresaId) {
+        Ticket ticket = obtenerTicketDeTenant(id, empresaId);
+
+        Long usuarioActual = SecurityUtils.getCurrentUserId();
+        if (usuarioActual == null || ticket.getCliente() == null
+                || !usuarioActual.equals(ticket.getCliente().getId())) {
+            throw new IllegalArgumentException(
+                    "Solo el cliente dueño del ticket puede reabrirlo.");
+        }
+
+        if (ticket.getEstado() != EstadoTicket.RESUELTO) {
+            throw new IllegalArgumentException(
+                    "Solo se puede reabrir un ticket que esté resuelto. Estado actual: "
+                    + ticket.getEstado().name());
+        }
+
+        validarTransicion(EstadoTicket.RESUELTO, EstadoTicket.EN_PROGRESO);
+        ticket.setEstado(EstadoTicket.EN_PROGRESO);
+        Ticket guardado = ticketRepository.save(ticket);
+
+        Usuario usuario = usuarioRepository.getReferenceById(usuarioActual);
+        TicketComentario comentario = TicketComentario.builder()
+                .mensaje("El cliente reabrió el ticket: la solución no fue satisfactoria.")
+                .ticket(guardado)
+                .usuario(usuario)
+                .esSistema(true)
+                .build();
+        comentarioRepository.save(comentario);
+
+        return guardado;
+    }
+
+    /**
+     * Cierra automáticamente los tickets que llevan más de {@value #DIAS_PARA_AUTO_CIERRE}
+     * días en estado RESUELTO sin que el cliente haya calificado ni reabrido.
+     *
+     * Lo invoca un {@code @Scheduled} (ver TicketAutoCloseScheduler) una vez al día.
+     * No requiere usuario autenticado: es una tarea de mantenimiento del sistema.
+     *
+     * @return cantidad de tickets cerrados automáticamente
+     */
+    @Override
+    public int cerrarResueltosAutomaticamente() {
+        LocalDateTime fechaLimite = LocalDateTime.now().minusDays(DIAS_PARA_AUTO_CIERRE);
+        List<Ticket> resueltosAntiguos = ticketRepository.findResueltosAntesDe(fechaLimite);
+
+        int cerrados = 0;
+        for (Ticket ticket : resueltosAntiguos) {
+            ticket.setEstado(EstadoTicket.CERRADO);
+            ticket.setJustificacionCierre(
+                    "Cerrado automáticamente: el ticket estuvo resuelto más de "
+                    + DIAS_PARA_AUTO_CIERRE + " días sin respuesta del cliente.");
+            ticketRepository.save(ticket);
+
+            TicketComentario comentario = TicketComentario.builder()
+                    .mensaje("El ticket fue cerrado automáticamente por inactividad del cliente ("
+                            + DIAS_PARA_AUTO_CIERRE + " días en estado RESUELTO).")
+                    .ticket(ticket)
+                    .esSistema(true)
+                    .build();
+            comentarioRepository.save(comentario);
+            cerrados++;
+        }
+        return cerrados;
     }
 
     /**
